@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Favicon - Ultra simplified net→shelf -->
+
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#2E86AB"/>
+
+  <!-- Simplified waves (net) -->
+  <path d="M6 12 Q11 10, 16 12" stroke="#FFF8E7" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M6 16 Q11 14, 16 16" stroke="#FFF8E7" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- Arrow hint -->
+  <path d="M16 14 L20 14" stroke="#E8941A" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Mini shelf/book -->
+  <rect x="20" y="10" width="8" height="12" rx="2" fill="#8B5A2B"/>
+  <rect x="22" y="12" width="2" height="8" fill="#FFF8E7"/>
+  <rect x="25" y="12" width="2" height="8" fill="#D4A574"/>
+</svg>

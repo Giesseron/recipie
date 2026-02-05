@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>בחרו עיצוב - 5 כיוונים אסתטיים</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Caveat:wght@400;700&family=Playfair+Display:wght@400;700;900&family=Rubik:wght@400;500;700;900&family=Varela+Round&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rubik', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #000;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: 'Rubik', sans-serif;
+        }
+
+        .nav-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .section {
+            min-height: 100vh;
+            width: 100%;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            scroll-snap-align: start;
+        }
+
+        .section-label {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            font-size: 14px;
+            opacity: 0.6;
+            font-weight: 500;
+        }
+
+        /* ========== SECTION 1: NEO-BRUTALIST ========== */
+        #brutalist {
+            background: #fff;
+            color: #000;
+        }
+
+        #brutalist .recipe-card {
+            width: 90%;
+            max-width: 800px;
+            border: 8px solid #000;
+            background: #fff;
+            position: relative;
+            animation: brutalist-slam 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes brutalist-slam {
+            0% { transform: scale(0.8) rotate(-2deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        #brutalist .card-header {
+            background: #FFFF00;
+            padding: 30px;
+            border-bottom: 8px solid #000;
+        }
+
+        #brutalist h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: 48px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+        }
+
+        #brutalist .card-body {
+            padding: 30px;
+        }
+
+        #brutalist .ingredient {
+            font-family: 'Space Mono', monospace;
+            padding: 15px;
+            border: 3px solid #000;
+            margin-bottom: 10px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        #brutalist .ingredient:hover {
+            background: #000;
+            color: #FFFF00;
+            transform: translateX(-5px);
+        }
+
+        #brutalist .tag {
+            display: inline-block;
+            background: #000;
+            color: #FFFF00;
+            padding: 8px 16px;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 10px;
+        }
+
+        /* ========== SECTION 2: SOFT ORGANIC ========== */
+        #organic {
+            background: linear-gradient(135deg, #F5F1E8 0%, #E8DCC4 100%);
+            color: #3D3325;
+        }
+
+        #organic .recipe-card {
+            width: 90%;
+            max-width: 700px;
+            background: #FFFBF5;
+            border-radius: 40px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(139, 110, 74, 0.15);
+            position: relative;
+            animation: organic-grow 1s ease-out;
+        }
+
+        @keyframes organic-grow {
+            0% { transform: scale(0.9); opacity: 0; }
+            60% { transform: scale(1.02); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        #organic .recipe-card::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(135deg, #D4A574 0%, #9B8B6C 100%);
+            border-radius: 45px;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        #organic h1 {
+            font-family: 'Caveat', cursive;
+            font-size: 56px;
+            color: #8B6E4A;
+            margin-bottom: 20px;
+        }
+
+        #organic .ingredient {
+            background: #FFFFFF;
+            padding: 18px 24px;
+            border-radius: 30px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 2px solid transparent;
+            font-size: 16px;
+        }
+
+        #organic .ingredient:hover {
+            transform: translateY(-3px) scale(1.02);
+            border-color: #9B8B6C;
+            box-shadow: 0 8px 20px rgba(139, 110, 74, 0.2);
+        }
+
+        #organic .ingredient.checked {
+            background: #E8DCC4;
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        #organic .tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #A8C69F 0%, #7FA874 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        /* ========== SECTION 3: RETRO ISRAELI ========== */
+        #retro {
+            background: linear-gradient(180deg, #F4E4C1 0%, #E8CDA3 100%);
+            color: #3D2817;
+        }
+
+        #retro .recipe-card {
+            width: 90%;
+            max-width: 650px;
+            background: #FFF9E6;
+            border: 12px solid #8B4513;
+            box-shadow:
+                8px 8px 0 #D2691E,
+                16px 16px 0 #CD853F,
+                0 20px 40px rgba(0,0,0,0.3);
+            padding: 35px;
+            position: relative;
+            animation: retro-flip 0.8s ease-out;
+        }
+
+        @keyframes retro-flip {
+            0% { transform: perspective(1000px) rotateY(-90deg); opacity: 0; }
+            100% { transform: perspective(1000px) rotateY(0deg); opacity: 1; }
+        }
+
+        #retro .recipe-card::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            border: 3px dashed #D2691E;
+            pointer-events: none;
+        }
+
+        #retro h1 {
+            font-family: 'Varela Round', sans-serif;
+            font-size: 52px;
+            color: #D2691E;
+            text-shadow: 3px 3px 0 #F4A460;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        #retro .polaroid {
+            background: white;
+            padding: 15px;
+            padding-bottom: 60px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: rotate(-2deg);
+            margin: 20px 0;
+            max-width: 300px;
+        }
+
+        #retro .polaroid-img {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+        }
+
+        #retro .ingredient {
+            background: #FFE5CC;
+            padding: 12px 20px;
+            margin-bottom: 8px;
+            border-left: 5px solid #D2691E;
+            font-family: 'Varela Round', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #retro .ingredient:hover {
+            background: #FFD4A3;
+            transform: translateX(-5px);
+            border-left-width: 10px;
+        }
+
+        #retro .sticker {
+            position: absolute;
+            background: #FF6B35;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50%;
+            font-weight: bold;
+            transform: rotate(-15deg);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            font-size: 14px;
+        }
+
+        /* ========== SECTION 4: DARK LUXURY ========== */
+        #luxury {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #F5F5DC;
+        }
+
+        #luxury .recipe-card {
+            width: 90%;
+            max-width: 900px;
+            background: #252525;
+            padding: 60px;
+            border: 1px solid #D4AF37;
+            box-shadow: 0 30px 90px rgba(0,0,0,0.5);
+            position: relative;
+            animation: luxury-fade 1.2s ease-out;
+        }
+
+        @keyframes luxury-fade {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        #luxury .recipe-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #D4AF37, transparent);
+        }
+
+        #luxury h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 64px;
+            font-weight: 900;
+            color: #D4AF37;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        #luxury .subtitle {
+            font-size: 14px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        #luxury .ingredient {
+            padding: 20px 0;
+            border-bottom: 1px solid #3d3d3d;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #luxury .ingredient:hover {
+            padding-right: 20px;
+            color: #D4AF37;
+            border-bottom-color: #D4AF37;
+        }
+
+        #luxury .ingredient::after {
+            content: '→';
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        #luxury .ingredient:hover::after {
+            opacity: 1;
+        }
+
+        #luxury .tag {
+            display: inline-block;
+            background: transparent;
+            color: #D4AF37;
+            padding: 8px 20px;
+            border: 1px solid #D4AF37;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+
+        /* ========== SECTION 5: PLAYFUL MAXIMALIST ========== */
+        #maximalist {
+            background:
+                linear-gradient(45deg, #FF69B4 0%, #FF1493 25%, #9370DB 50%, #4169E1 75%, #00CED1 100%),
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px);
+            color: #2d2d2d;
+        }
+
+        #maximalist .recipe-card {
+            width: 90%;
+            max-width: 750px;
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow:
+                0 0 0 8px #FFD700,
+                0 0 0 16px #FF69B4,
+                0 30px 60px rgba(0,0,0,0.3);
+            transform: rotate(-1deg);
+            position: relative;
+            animation: maximalist-bounce 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes maximalist-bounce {
+            0% { transform: scale(0.3) rotate(-180deg); opacity: 0; }
+            50% { transform: scale(1.05) rotate(2deg); }
+            100% { transform: scale(1) rotate(-1deg); opacity: 1; }
+        }
+
+        #maximalist h1 {
+            font-family: 'Rubik', sans-serif;
+            font-size: 56px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #FF69B4, #FF1493, #9370DB, #4169E1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: rainbow-shift 3s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes rainbow-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        #maximalist .ingredient {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            padding: 15px 25px;
+            border-radius: 50px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-weight: 700;
+            box-shadow: 0 4px 0 #FF8C00;
+            transform: translateY(0);
+            border: 3px solid #2d2d2d;
+        }
+
+        #maximalist .ingredient:hover {
+            transform: translateY(-8px) rotate(2deg) scale(1.05);
+            box-shadow: 0 12px 0 #FF8C00;
+        }
+
+        #maximalist .ingredient:active {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 0 #FF8C00;
+        }
+
+        #maximalist .sticker {
+            position: absolute;
+            font-size: 40px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        #maximalist .sticker:nth-child(1) { top: 20px; left: 20px; animation-delay: 0s; }
+        #maximalist .sticker:nth-child(2) { top: 50px; right: 30px; animation-delay: 0.5s; }
+        #maximalist .sticker:nth-child(3) { bottom: 30px; left: 40px; animation-delay: 1s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        #maximalist .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #FF69B4;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(600px) rotate(720deg); opacity: 0; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .section {
+                padding: 40px 20px;
+            }
+
+            #brutalist h1 { font-size: 32px; }
+            #organic h1 { font-size: 40px; }
+            #retro h1 { font-size: 36px; }
+            #luxury h1 { font-size: 40px; }
+            #maximalist h1 { font-size: 36px; }
+
+            .nav {
+                top: 10px;
+                left: 10px;
+            }
+
+            .nav-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="nav">
+        <button class="nav-btn" onclick="scrollToSection('brutalist')">1</button>
+        <button class="nav-btn" onclick="scrollToSection('organic')">2</button>
+        <button class="nav-btn" onclick="scrollToSection('retro')">3</button>
+        <button class="nav-btn" onclick="scrollToSection('luxury')">4</button>
+        <button class="nav-btn" onclick="scrollToSection('maximalist')">5</button>
+    </div>
+
+    <!-- Section 1: Neo-Brutalist -->
+    <section id="brutalist" class="section">
+        <div class="section-label">1. NEO-BRUTALIST KITCHEN</div>
+        <div class="recipe-card">
+            <div class="card-header">
+                <h1>שקשוקה ישראלית</h1>
+                <span class="tag">בשרי</span>
+                <span class="tag">מהיר</span>
+            </div>
+            <div class="card-body">
+                <div class="ingredient" onclick="this.style.background='#000'; this.style.color='#FFFF00';">
+                    → 6 ביצים
+                </div>
+                <div class="ingredient" onclick="this.style.background='#000'; this.style.color='#FFFF00';">
+                    → 4 עגבניות בשלות
+                </div>
+                <div class="ingredient" onclick="this.style.background='#000'; this.style.color='#FFFF00';">
+                    → 2 גרגרי שום
+                </div>
+                <div class="ingredient" onclick="this.style.background='#000'; this.style.color='#FFFF00';">
+                    → כפית כמון
+                </div>
+                <div class="ingredient" onclick="this.style.background='#000'; this.style.color='#FFFF00';">
+                    → מלח ופלפל
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Soft Organic -->
+    <section id="organic" class="section">
+        <div class="section-label">2. SOFT ORGANIC GARDEN</div>
+        <div class="recipe-card">
+            <h1>עוגת דבש של סבתא</h1>
+            <span class="tag">פרווה</span>
+            <span class="tag">טבעוני</span>
+            <div style="margin-top: 30px;">
+                <div class="ingredient" onclick="this.classList.toggle('checked')">
+                    🌾 3 כוסות קמח
+                </div>
+                <div class="ingredient" onclick="this.classList.toggle('checked')">
+                    🍯 כוס דבש
+                </div>
+                <div class="ingredient" onclick="this.classList.toggle('checked')">
+                    🥚 4 ביצים
+                </div>
+                <div class="ingredient" onclick="this.classList.toggle('checked')">
+                    ☕ כוס קפה חזק
+                </div>
+                <div class="ingredient" onclick="this.classList.toggle('checked')">
+                    🧂 כפית קינמון
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Retro Israeli -->
+    <section id="retro" class="section">
+        <div class="section-label">3. RETRO ISRAELI DINER (שנות ה-70)</div>
+        <div class="recipe-card">
+            <div class="sticker" style="top: -20px; right: -20px;">חדש!</div>
+            <h1>קובה מרק של אמא</h1>
+            <div class="polaroid">
+                <div class="polaroid-img">🍲</div>
+            </div>
+            <div style="margin-top: 25px;">
+                <div class="ingredient">
+                    ✓ 500 גרם בשר טחון
+                </div>
+                <div class="ingredient">
+                    ✓ 2 כוסות סולת
+                </div>
+                <div class="ingredient">
+                    ✓ בצל גדול
+                </div>
+                <div class="ingredient">
+                    ✓ כורכום ובהרט
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Dark Luxury -->
+    <section id="luxury" class="section">
+        <div class="section-label" style="color: #D4AF37;">4. DARK LUXURY EDITORIAL</div>
+        <div class="recipe-card">
+            <h1>Beef Wellington</h1>
+            <div class="subtitle">Premium · Sophisticated · Timeless</div>
+            <div style="margin-top: 40px;">
+                <div class="ingredient">
+                    <span>פילה בקר איכותי</span>
+                    <span style="color: #999;">800g</span>
+                </div>
+                <div class="ingredient">
+                    <span>בצק עלים צרפתי</span>
+                    <span style="color: #999;">500g</span>
+                </div>
+                <div class="ingredient">
+                    <span>פטריות פורטובלו</span>
+                    <span style="color: #999;">300g</span>
+                </div>
+                <div class="ingredient">
+                    <span>פטה דה פואה גרא</span>
+                    <span style="color: #999;">150g</span>
+                </div>
+            </div>
+            <div style="margin-top: 40px;">
+                <span class="tag">חלבי</span>
+                <span class="tag">גורמה</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Playful Maximalist -->
+    <section id="maximalist" class="section">
+        <div class="section-label">5. PLAYFUL MAXIMALIST CHAOS</div>
+        <div class="recipe-card">
+            <div class="sticker">✨</div>
+            <div class="sticker">🎉</div>
+            <div class="sticker">💫</div>
+            <h1>מאפינס שוקולד משגעים!</h1>
+            <div style="margin-top: 25px;">
+                <div class="ingredient">
+                    🍫 200 גרם שוקולד מריר
+                </div>
+                <div class="ingredient">
+                    🧈 100 גרם חמאה
+                </div>
+                <div class="ingredient">
+                    🥚 3 ביצים ענקיות
+                </div>
+                <div class="ingredient">
+                    🍚 כוס קמח תופח
+                </div>
+                <div class="ingredient">
+                    ✨ אבקת קסמים (אופציונלי)
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Add some random confetti to maximalist section
+        const maxSection = document.getElementById('maximalist');
+        const colors = ['#FF69B4', '#FFD700', '#00CED1', '#9370DB', '#FF1493'];
+
+        for (let i = 0; i < 20; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDelay = Math.random() * 3 + 's';
+            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            maxSection.appendChild(confetti);
+        }
+
+        // Update active nav button on scroll
+        const sections = document.querySelectorAll('.section');
+        const navBtns = document.querySelectorAll('.nav-btn');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navBtns.forEach((btn, index) => {
+                btn.style.background = 'white';
+                btn.style.transform = 'scale(1)';
+            });
+
+            const activeIndex = ['brutalist', 'organic', 'retro', 'luxury', 'maximalist'].indexOf(current);
+            if (activeIndex !== -1) {
+                navBtns[activeIndex].style.background = '#000';
+                navBtns[activeIndex].style.color = '#fff';
+                navBtns[activeIndex].style.transform = 'scale(1.2)';
+            }
+        });
+    </script>
+</body>
+</html>

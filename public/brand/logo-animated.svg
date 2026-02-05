@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" fill="none">
+  <!-- Animated Logo - Elements named for CSS targeting -->
+
+  <!-- Net Symbol (circle with wave pattern) -->
+  <g id="logo-net" class="logo-element">
+    <circle cx="60" cy="50" r="35" fill="#2E86AB" stroke="#1B4D6E" stroke-width="2.5"/>
+    <!-- Wave/net lines inside circle -->
+    <path d="M32 40 Q46 34, 60 40 Q74 46, 88 40" stroke="#FFF8E7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M32 50 Q46 44, 60 50 Q74 56, 88 50" stroke="#FFF8E7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M32 60 Q46 54, 60 60 Q74 66, 88 60" stroke="#FFF8E7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Fish/recipe icon in net -->
+    <path d="M52 50 L68 42 L68 58 Z" fill="#FFF8E7" opacity="0.9"/>
+  </g>
+
+  <!-- Arrow (animated draw) -->
+  <g id="logo-arrow" class="logo-element">
+    <path id="arrow-line" d="M105 50 L155 50" stroke="#E8941A" stroke-width="5" stroke-linecap="round"/>
+    <path id="arrow-head" d="M145 38 L162 50 L145 62" stroke="#E8941A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+
+  <!-- Shelf Symbol (rounded rectangle with book spines) -->
+  <g id="logo-shelf" class="logo-element">
+    <rect x="175" y="12" width="65" height="76" rx="8" fill="#8B5A2B" stroke="#5D3A1A" stroke-width="2.5"/>
+    <!-- Book spines -->
+    <rect x="185" y="22" width="12" height="52" rx="2" fill="#D4A574"/>
+    <rect x="200" y="22" width="12" height="52" rx="2" fill="#FFF8E7"/>
+    <rect x="215" y="22" width="12" height="52" rx="2" fill="#E8941A"/>
+    <!-- Shelf line -->
+    <path d="M180 78 L232 78" stroke="#5D3A1A" stroke-width="2.5"/>
+  </g>
+
+  <!-- Hebrew Text - Brand Name -->
+  <text id="logo-text" class="logo-element" x="255" y="60" font-family="Heebo, Arial Hebrew, sans-serif" font-size="36" font-weight="900" fill="#3D2817" direction="rtl">
+    מהרשת למדף
+  </text>
+
+  <!-- Tagline -->
+  <text id="logo-tagline" class="logo-element" x="255" y="90" font-family="Heebo, Arial Hebrew, sans-serif" font-size="16" font-weight="400" fill="#8B5A2B" direction="rtl">
+    צוד. שמור. בשל.
+  </text>
+</svg>

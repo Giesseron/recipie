@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" fill="none">
+  <!-- Net Symbol (circle with wave pattern) -->
+  <g id="net-symbol">
+    <circle cx="35" cy="40" r="28" fill="#2E86AB" stroke="#1B4D6E" stroke-width="2"/>
+    <!-- Wave/net lines inside circle -->
+    <path d="M15 32 Q25 28, 35 32 Q45 36, 55 32" stroke="#FFF8E7" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M15 40 Q25 36, 35 40 Q45 44, 55 40" stroke="#FFF8E7" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M15 48 Q25 44, 35 48 Q45 52, 55 48" stroke="#FFF8E7" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Small fish/recipe icon -->
+    <path d="M30 40 L40 35 L40 45 Z" fill="#FFF8E7" opacity="0.8"/>
+  </g>
+
+  <!-- Arrow -->
+  <g id="arrow">
+    <path d="M70 40 L110 40" stroke="#E8941A" stroke-width="4" stroke-linecap="round"/>
+    <path d="M102 32 L114 40 L102 48" stroke="#E8941A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+
+  <!-- Shelf Symbol (rounded rectangle with book spines) -->
+  <g id="shelf-symbol">
+    <rect x="125" y="15" width="50" height="50" rx="6" fill="#8B5A2B" stroke="#5D3A1A" stroke-width="2"/>
+    <!-- Book spines -->
+    <rect x="132" y="22" width="8" height="36" rx="1" fill="#D4A574"/>
+    <rect x="143" y="22" width="8" height="36" rx="1" fill="#FFF8E7"/>
+    <rect x="154" y="22" width="8" height="36" rx="1" fill="#E8941A"/>
+    <!-- Shelf line -->
+    <path d="M128 58 L167 58" stroke="#5D3A1A" stroke-width="2"/>
+  </g>
+
+  <!-- Hebrew Text -->
+  <text id="brand-text" x="190" y="50" font-family="Heebo, Arial Hebrew, sans-serif" font-size="28" font-weight="900" fill="#3D2817" direction="rtl">
+    מהרשת למדף
+  </text>
+</svg>
