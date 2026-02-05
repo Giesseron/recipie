@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       updated: 0,
       failed: 0,
       skipped: 0,
-      details: [] as Array<{ id: string; title: string; status: string; newImageUrl?: string }>,
+      details: [] as Array<{ id: string; title: string; status: string; platform?: string; sourceUrl?: string; currentImage?: string | null; fetchedImage?: string | null }>,
     };
 
     // Process each recipe
@@ -67,6 +67,13 @@ export async function GET(request: NextRequest) {
           recipe.source_platform as Platform
         );
 
+        const debugInfo = {
+          platform: recipe.source_platform,
+          sourceUrl: recipe.source_url,
+          currentImage: recipe.image_url,
+          fetchedImage: content.imageUrl,
+        };
+
         // If we got a new image URL and it's different from the old one
         if (content.imageUrl && content.imageUrl !== recipe.image_url) {
           // Update the recipe with new thumbnail
@@ -84,14 +91,15 @@ export async function GET(request: NextRequest) {
             id: recipe.id,
             title: recipe.title,
             status: "updated",
-            newImageUrl: content.imageUrl,
+            ...debugInfo,
           });
         } else {
           results.skipped++;
           results.details.push({
             id: recipe.id,
             title: recipe.title,
-            status: "skipped - same or no image",
+            status: content.imageUrl ? "skipped - same image" : "skipped - no image fetched",
+            ...debugInfo,
           });
         }
       } catch (error) {
