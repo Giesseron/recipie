@@ -36,25 +36,46 @@ export async function PATCH(
   }
 
   const body = await request.json();
-  const categories: unknown = body.categories;
+  const updates: Record<string, unknown> = {};
 
-  // Validate
-  if (
-    !Array.isArray(categories) ||
-    categories.length === 0 ||
-    categories.some((c: unknown) => typeof c !== "string" || c.trim() === "")
-  ) {
+  // Handle title update
+  if (body.title !== undefined) {
+    const title = typeof body.title === "string" ? body.title.trim() : "";
+    if (!title) {
+      return NextResponse.json(
+        { error: "שם המתכון לא יכול להיות ריק" },
+        { status: 400 }
+      );
+    }
+    updates.title = title;
+  }
+
+  // Handle categories update
+  if (body.categories !== undefined) {
+    const categories: unknown = body.categories;
+    if (
+      !Array.isArray(categories) ||
+      categories.length === 0 ||
+      categories.some((c: unknown) => typeof c !== "string" || c.trim() === "")
+    ) {
+      return NextResponse.json(
+        { error: "יש לבחור לפחות קטגוריה אחת חוקית" },
+        { status: 400 }
+      );
+    }
+    updates.categories = (categories as string[]).map((c) => c.trim());
+  }
+
+  if (Object.keys(updates).length === 0) {
     return NextResponse.json(
-      { error: "יש לבחור לפחות קטגורי אחת חוקית" },
+      { error: "לא התקבלו שדות לעדכון" },
       { status: 400 }
     );
   }
 
-  const trimmed = (categories as string[]).map((c) => c.trim());
-
   const { data: updated, error } = await supabase
     .from("recipes")
-    .update({ categories: trimmed })
+    .update(updates)
     .eq("id", id)
     .eq("user_id", user.id)
     .select()
@@ -62,7 +83,7 @@ export async function PATCH(
 
   if (error || !updated) {
     return NextResponse.json(
-      { error: "שגיאה בעדכון הקטגורים" },
+      { error: "שגיאה בעדכון המתכון" },
       { status: 500 }
     );
   }

@@ -24,9 +24,14 @@ const EXTRACTION_PROMPT = `אתה מומחה לחילוץ מתכונים. קיב
 - אם התוכן לא מכיל מתכון, החזר: {"error": "no_recipe"}
 - כתוב הכל בעברית.`;
 
-const MEDIA_EXTRACTION_PROMPT = `אתה מומחה לחילוץ מתכונים מתמונות. קיבלת תמונות שמכילות מתכון - ייתכן שזה צילום מסך של מתכון, תמונות מסרטון בישול, או תמונות של מנה עם הוראות.
+const MEDIA_EXTRACTION_PROMPT = `אתה מומחה לחילוץ מתכונים מתמונות. התמונות שקיבלת מכילות מתכון. זה יכול להיות:
+- צילום מסך של אתר מתכונים או אפליקציה
+- צילום מסך חלקי שמראה רק מצרכים או רק הוראות
+- תמונות מסרטון בישול
+- תמונה של מתכון כתוב ביד
+- רשימת מצרכים והוראות בכל פורמט
 
-קרא את כל הטקסט הנראה בתמונות וחלץ את המתכון.
+המשימה שלך: קרא את כל הטקסט הנראה בתמונות וחלץ ממנו מתכון. גם אם רואים רק חלק מהמתכון (רק מצרכים בלי הוראות, או להיפך) - חלץ את מה שיש.
 
 החזר JSON בפורמט הבא בלבד, בלי טקסט נוסף:
 {
@@ -42,8 +47,10 @@ const MEDIA_EXTRACTION_PROMPT = `אתה מומחה לחילוץ מתכונים �
 - הפרד כמות ויחידה מהשם. אם אין כמות מדויקת, שים null.
 - אם אתה רואה מצרכים בתמונה (על שולחן, בסרטון בישול), רשום אותם גם אם אין טקסט מפורש.
 - אם אתה רואה שלבי הכנה (תמונות מסרטון), תאר את מה שקורה בכל שלב.
+- אם יש רק מצרכים בלי הוראות, שים מערך ריק ב-steps.
+- אם יש רק הוראות בלי מצרכים, שים מערך ריק ב-ingredients.
 - קטגוריות אפשריות: "חלבי", "בשרי", "פרווה", "טבעוני", "בריאותי". בחר את כל הרלוונטיות.
-- אם התמונות לא מכילות מתכון, החזר: {"error": "no_recipe"}
+- החזר {"error": "no_recipe"} רק אם התמונות לא קשורות לאוכל או בישול בכלל.
 - כתוב הכל בעברית.`;
 
 const VALID_CATEGORIES: Category[] = [
@@ -55,10 +62,19 @@ const VALID_CATEGORIES: Category[] = [
 ];
 
 function parseExtractedRecipe(text: string): ExtractedRecipe | null {
+  console.log("Claude raw response:", text.slice(0, 500));
   const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) return null;
+  if (!jsonMatch) {
+    console.error("No JSON found in Claude response");
+    return null;
+  }
 
-  const parsed = JSON.parse(jsonMatch[0]);
+  try {
+    var parsed = JSON.parse(jsonMatch[0]);
+  } catch (e) {
+    console.error("JSON parse failed:", e, "Raw:", jsonMatch[0].slice(0, 300));
+    return null;
+  }
   if (parsed.error === "no_recipe") return null;
 
   const categories = (parsed.categories || []).filter((c: string) =>
@@ -120,6 +136,7 @@ export async function extractRecipeFromMedia(
   }
   content.push({ type: "text" as const, text: promptText });
 
+  console.log(`Sending ${images.length} image(s) to Claude for multimodal extraction`);
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 2048,
@@ -128,6 +145,7 @@ export async function extractRecipeFromMedia(
 
   const text =
     response.content[0].type === "text" ? response.content[0].text : "";
+  console.log("Multimodal extraction stop_reason:", response.stop_reason);
   return parseExtractedRecipe(text);
 }
 

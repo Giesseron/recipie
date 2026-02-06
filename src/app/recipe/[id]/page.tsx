@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Trash2 } from "lucide-react";
+import { ArrowRight, Trash2, Pencil, Check, X } from "lucide-react";
 import { RecipeWithIngredients, Category } from "@/types/recipe";
 import { getRecipeGradient, getCategoryIcon } from "@/lib/gradients";
 import PageTransition from "@/components/PageTransition";
@@ -21,6 +21,9 @@ export default function RecipePage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imgError, setImgError] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -46,6 +49,28 @@ export default function RecipePage({
     if (!confirm("בטוח שרוצים למחוק את המתכון?")) return;
     await fetch(`/api/recipes/${id}`, { method: "DELETE" });
     router.push("/");
+  }
+
+  async function handleTitleSave() {
+    if (!titleDraft.trim() || titleDraft.trim() === recipe?.title) {
+      setEditingTitle(false);
+      return;
+    }
+    setSavingTitle(true);
+    try {
+      const res = await fetch(`/api/recipes/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: titleDraft.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRecipe(data.recipe);
+      }
+    } finally {
+      setSavingTitle(false);
+      setEditingTitle(false);
+    }
   }
 
   if (loading) {
@@ -110,7 +135,45 @@ export default function RecipePage({
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="relative p-6 text-white w-full">
-            <h1 className="text-2xl font-bold drop-shadow-md">{recipe.title}</h1>
+            {editingTitle ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleTitleSave();
+                    if (e.key === "Escape") setEditingTitle(false);
+                  }}
+                  className="flex-1 text-2xl font-bold bg-black/30 backdrop-blur-sm rounded-lg px-3 py-1 text-white border border-white/30 outline-none focus:border-white/60"
+                  autoFocus
+                  disabled={savingTitle}
+                />
+                <button
+                  onClick={handleTitleSave}
+                  disabled={savingTitle}
+                  className="w-9 h-9 rounded-full bg-green-500/80 hover:bg-green-500 flex items-center justify-center transition-colors"
+                >
+                  <Check className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setEditingTitle(false)}
+                  className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group/title">
+                <h1 className="text-2xl font-bold drop-shadow-md">{recipe.title}</h1>
+                <button
+                  onClick={() => { setTitleDraft(recipe.title); setEditingTitle(true); }}
+                  className="opacity-0 group-hover/title:opacity-100 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
 
