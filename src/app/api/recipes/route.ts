@@ -110,19 +110,25 @@ export async function POST(request: NextRequest) {
         imageUrl = content.imageUrl;
         const textHint = [content.title, content.description].filter(Boolean).join("\n");
 
-        // Extract frames from video via VPS
-        const frameResult = await extractVideoFrames(classification.url);
+        // Try VPS frame extraction, fall back to text for YouTube
+        try {
+          const frameResult = await extractVideoFrames(classification.url);
 
-        // Use VPS thumbnail if available
-        if (frameResult.thumbnail) {
-          thumbnailBase64 = frameResult.thumbnail;
+          if (frameResult.thumbnail) {
+            thumbnailBase64 = frameResult.thumbnail;
+          }
+
+          extracted = await withRetry(
+            () => extractRecipeFromMedia(frameResult.frames, textHint || undefined),
+            2
+          );
+        } catch (vpsError) {
+          console.log("VPS extraction failed, falling back to text:", (vpsError as Error).message);
+          // Fall back to text extraction using oEmbed metadata
+          if (textHint) {
+            extracted = await withRetry(() => extractRecipe(textHint), 3);
+          }
         }
-
-        // Extract recipe from video frames
-        extracted = await withRetry(
-          () => extractRecipeFromMedia(frameResult.frames, textHint || undefined),
-          2
-        );
       } else {
         // === TEXT PIPELINE (website) ===
         const content = await withRetry(
