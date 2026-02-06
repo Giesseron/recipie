@@ -155,6 +155,20 @@ function extractJsonLdRecipe(html: string): { text: string; image: string | null
 }
 
 /**
+ * Extract video description from YouTube's embedded ytInitialPlayerResponse JSON.
+ * This contains the full, untruncated description (og:description is cut off).
+ */
+function extractYouTubeDescription(html: string): string | null {
+  const match = html.match(/"shortDescription":"((?:[^"\\]|\\.)*)"/);
+  if (!match) return null;
+  try {
+    return JSON.parse(`"${match[1]}"`);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Strip HTML tags and collapse whitespace to get readable body text.
  */
 function extractBodyText(html: string): string {
@@ -211,6 +225,19 @@ async function fetchWebsiteContent(url: string): Promise<FetchedContent> {
       imageUrl: jsonLd.image || imageUrl,
       platform: "website",
       fullText: jsonLd.text,
+    };
+  }
+
+  // Try YouTube embedded description (full, untruncated)
+  const ytDescription = extractYouTubeDescription(html);
+  if (ytDescription) {
+    return {
+      description: [title, ytDescription].filter(Boolean).join("\n\n"),
+      title: title || null,
+      videoUrl: null,
+      imageUrl,
+      platform: "website",
+      fullText: ytDescription,
     };
   }
 
