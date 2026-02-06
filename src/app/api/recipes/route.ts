@@ -124,9 +124,25 @@ export async function POST(request: NextRequest) {
           );
         } catch (vpsError) {
           console.log("VPS extraction failed, falling back to text:", (vpsError as Error).message);
-          // Fall back to text extraction using oEmbed metadata
-          if (textHint) {
-            extracted = await withRetry(() => extractRecipe(textHint), 3);
+          // Fall back: scrape the page as a website for richer text (video description often has full recipe)
+          try {
+            const websiteContent = await withRetry(
+              () => fetchContent(classification.url, "website"),
+              3
+            );
+            const richText = websiteContent.fullText || websiteContent.description;
+            if (!imageUrl && websiteContent.imageUrl) {
+              imageUrl = websiteContent.imageUrl;
+            }
+            if (richText) {
+              extracted = await withRetry(() => extractRecipe(richText), 3);
+            }
+          } catch (scrapeError) {
+            console.log("Website scrape fallback also failed:", (scrapeError as Error).message);
+            // Last resort: try with whatever oEmbed text we have
+            if (textHint) {
+              extracted = await withRetry(() => extractRecipe(textHint), 3);
+            }
           }
         }
       } else {
