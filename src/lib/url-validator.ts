@@ -1,23 +1,26 @@
 import { Platform } from "@/types/recipe";
 
-interface UrlValidationResult {
+export type ExtractionMethod = "video" | "text";
+
+interface UrlClassification {
   valid: true;
   platform: Platform;
+  extractionMethod: ExtractionMethod;
   url: string;
 }
 
-interface UrlValidationError {
+interface UrlClassificationError {
   valid: false;
   error: string;
 }
 
-type ValidationResult = UrlValidationResult | UrlValidationError;
+export type ClassificationResult = UrlClassification | UrlClassificationError;
 
-const PLATFORM_PATTERNS: { platform: Platform; patterns: RegExp[] }[] = [
+const SOCIAL_MEDIA_PATTERNS: { platform: Platform; patterns: RegExp[] }[] = [
   {
     platform: "instagram",
     patterns: [
-      /^https?:\/\/(www\.)?instagram\.com\/(reel|p)\/.+/i,
+      /^https?:\/\/(www\.)?instagram\.com\/(reels?|p)\/.+/i,
       /^https?:\/\/(www\.)?instagram\.com\/stories\/.+/i,
     ],
   },
@@ -39,11 +42,15 @@ const PLATFORM_PATTERNS: { platform: Platform; patterns: RegExp[] }[] = [
   },
   {
     platform: "youtube",
-    patterns: [/^https?:\/\/(www\.)?youtube\.com\/shorts\/.+/i],
+    patterns: [
+      /^https?:\/\/(www\.)?youtube\.com\/shorts\/.+/i,
+      /^https?:\/\/(www\.)?youtube\.com\/watch\?v=.+/i,
+      /^https?:\/\/youtu\.be\/.+/i,
+    ],
   },
 ];
 
-export function validateRecipeUrl(url: string): ValidationResult {
+export function classifyRecipeUrl(url: string): ClassificationResult {
   const trimmed = url.trim();
 
   try {
@@ -55,17 +62,20 @@ export function validateRecipeUrl(url: string): ValidationResult {
     };
   }
 
-  for (const { platform, patterns } of PLATFORM_PATTERNS) {
+  // Check social media patterns → video extraction
+  for (const { platform, patterns } of SOCIAL_MEDIA_PATTERNS) {
     for (const pattern of patterns) {
       if (pattern.test(trimmed)) {
-        return { valid: true, platform, url: trimmed };
+        return { valid: true, platform, extractionMethod: "video", url: trimmed };
       }
     }
   }
 
-  return {
-    valid: false,
-    error:
-      "הפלטפורמה אינה נתמכת. הפלטפורמות הנתמכות: Instagram, Facebook, TikTok, YouTube Shorts",
-  };
+  // Any other valid URL → website text extraction
+  return { valid: true, platform: "website", extractionMethod: "text", url: trimmed };
+}
+
+// Backward-compatible alias
+export function validateRecipeUrl(url: string): ClassificationResult {
+  return classifyRecipeUrl(url);
 }

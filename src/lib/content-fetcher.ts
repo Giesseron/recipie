@@ -6,6 +6,7 @@ export interface FetchedContent {
   videoUrl: string | null;
   imageUrl: string | null;
   platform: Platform;
+  fullText?: string; // Rich text content for website scraping (JSON-LD + body)
 }
 
 /**
@@ -58,10 +59,187 @@ async function extractYouTubeThumbnail(url: string): Promise<string | null> {
   }
 }
 
+/**
+ * Extract Recipe structured data from JSON-LD scripts in HTML.
+ * Returns a text representation of the recipe if found, or null.
+ */
+function extractJsonLdRecipe(html: string): { text: string; image: string | null } | null {
+  // Find all JSON-LD script blocks
+  const jsonLdRegex = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match;
+
+  while ((match = jsonLdRegex.exec(html)) !== null) {
+    try {
+      let data = JSON.parse(match[1]);
+
+      // Handle @graph wrapper (common in WordPress/Yoast)
+      if (data["@graph"]) {
+        data = data["@graph"].find((item: { "@type": string | string[] }) =>
+          Array.isArray(item["@type"])
+            ? item["@type"].includes("Recipe")
+            : item["@type"] === "Recipe"
+        );
+        if (!data) continue;
+      }
+
+      // Check if this is a Recipe type
+      const type = data["@type"];
+      const isRecipe = Array.isArray(type) ? type.includes("Recipe") : type === "Recipe";
+      if (!isRecipe) continue;
+
+      // Build rich text from structured data
+      const parts: string[] = [];
+
+      if (data.name) parts.push(`שם: ${data.name}`);
+      if (data.description) parts.push(`תיאור: ${data.description}`);
+
+      // Ingredients
+      if (data.recipeIngredient && Array.isArray(data.recipeIngredient)) {
+        parts.push(`\nמצרכים:\n${data.recipeIngredient.join("\n")}`);
+      }
+
+      // Instructions - can be string, array of strings, or array of HowToStep
+      if (data.recipeInstructions) {
+        const instructions = data.recipeInstructions;
+        const steps: string[] = [];
+
+        if (typeof instructions === "string") {
+          steps.push(instructions);
+        } else if (Array.isArray(instructions)) {
+          for (const step of instructions) {
+            if (typeof step === "string") {
+              steps.push(step);
+            } else if (step.text) {
+              steps.push(step.text);
+            } else if (step.itemListElement) {
+              // HowToSection with sub-steps
+              for (const sub of step.itemListElement) {
+                steps.push(typeof sub === "string" ? sub : sub.text || "");
+              }
+            }
+          }
+        }
+
+        if (steps.length > 0) {
+          parts.push(`\nהוראות הכנה:\n${steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`);
+        }
+      }
+
+      if (data.recipeCategory) {
+        const cats = Array.isArray(data.recipeCategory) ? data.recipeCategory : [data.recipeCategory];
+        parts.push(`\nקטגוריות: ${cats.join(", ")}`);
+      }
+
+      // Image
+      let image: string | null = null;
+      if (data.image) {
+        if (typeof data.image === "string") {
+          image = data.image;
+        } else if (Array.isArray(data.image)) {
+          image = typeof data.image[0] === "string" ? data.image[0] : data.image[0]?.url || null;
+        } else if (data.image.url) {
+          image = data.image.url;
+        }
+      }
+
+      if (parts.length > 0) {
+        return { text: parts.join("\n"), image };
+      }
+    } catch {
+      // Invalid JSON, try next script block
+      continue;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Strip HTML tags and collapse whitespace to get readable body text.
+ */
+function extractBodyText(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+    .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+    .replace(/<header[\s\S]*?<\/header>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 8000); // Limit to avoid huge prompts
+}
+
+/**
+ * Fetch content from a generic website URL.
+ * Tries JSON-LD Recipe schema first, then falls back to meta tags + body text.
+ */
+async function fetchWebsiteContent(url: string): Promise<FetchedContent> {
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    },
+    redirect: "follow",
+  });
+
+  if (!response.ok) {
+    throw new Error(`לא הצלחנו לגשת לאתר (${response.status})`);
+  }
+
+  const html = await response.text();
+
+  const title = extractMeta(html, "og:title") || extractMeta(html, "title");
+  const imageUrl =
+    extractMeta(html, "og:image:secure_url") ||
+    extractMeta(html, "og:image:url") ||
+    extractMeta(html, "og:image") ||
+    null;
+
+  // Try JSON-LD first (richest structured data)
+  const jsonLd = extractJsonLdRecipe(html);
+  if (jsonLd) {
+    return {
+      description: title || "",
+      title: title || null,
+      videoUrl: null,
+      imageUrl: jsonLd.image || imageUrl,
+      platform: "website",
+      fullText: jsonLd.text,
+    };
+  }
+
+  // Fall back to meta tags + body text
+  const description =
+    extractMeta(html, "og:description") ||
+    extractMeta(html, "description") ||
+    "";
+  const bodyText = extractBodyText(html);
+
+  return {
+    description: [title, description].filter(Boolean).join("\n\n"),
+    title: title || null,
+    videoUrl: null,
+    imageUrl,
+    platform: "website",
+    fullText: bodyText || undefined,
+  };
+}
+
 export async function fetchContent(
   url: string,
   platform: Platform
 ): Promise<FetchedContent> {
+  // Website: dedicated handler with JSON-LD support
+  if (platform === "website") {
+    return fetchWebsiteContent(url);
+  }
+
   // For YouTube, try direct thumbnail extraction first (fastest, no API call)
   if (platform === "youtube") {
     const ytThumb = await extractYouTubeThumbnail(url);

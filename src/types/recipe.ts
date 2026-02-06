@@ -1,4 +1,4 @@
-export type Platform = "instagram" | "facebook" | "tiktok" | "youtube";
+export type Platform = "instagram" | "facebook" | "tiktok" | "youtube" | "website" | "upload";
 
 export type Category = string;
 
@@ -19,7 +19,7 @@ export interface Recipe {
   id: string;
   user_id: string;
   title: string;
-  source_url: string;
+  source_url: string | null;
   source_platform: Platform;
   video_embed_url: string | null;
   categories: Category[];

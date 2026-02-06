@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Instagram, Facebook, Youtube } from "lucide-react";
+import { Instagram, Facebook, Youtube, Globe, Camera } from "lucide-react";
 import { Recipe, Category } from "@/types/recipe";
 import { getRecipeGradient, getCategoryIcon, CATEGORY_BADGE_STYLES } from "@/lib/gradients";
 import { staggerItem } from "@/lib/motion";
@@ -14,6 +14,8 @@ const PLATFORM_ICONS: Record<string, React.ReactNode> = {
   facebook: <Facebook className="w-4 h-4" />,
   youtube: <Youtube className="w-4 h-4" />,
   tiktok: <span className="text-sm font-bold leading-none">T</span>,
+  website: <Globe className="w-4 h-4" />,
+  upload: <Camera className="w-4 h-4" />,
 };
 
 // Random rotation angles for variety

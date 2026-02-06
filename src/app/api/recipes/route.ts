@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateRecipeUrl } from "@/lib/url-validator";
+import { classifyRecipeUrl } from "@/lib/url-validator";
 import { fetchContent } from "@/lib/content-fetcher";
-import { extractRecipe, normalizeIngredient } from "@/lib/ai-extractor";
+import { extractRecipe, extractRecipeFromMedia, normalizeIngredient } from "@/lib/ai-extractor";
+import { extractVideoFrames } from "@/lib/vps-client";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { uploadRecipeImage } from "@/lib/image-storage";
+import { ExtractedRecipe, Platform } from "@/types/recipe";
+
+const MAX_UPLOAD_IMAGES = 5;
+const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 4MB per image (base64)
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,50 +22,120 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "לא מורשה" }, { status: 401 });
     }
 
-    const { url } = await request.json();
+    const body = await request.json();
+    const { url, images } = body as { url?: string; images?: string[] };
 
-    if (!url || typeof url !== "string") {
+    // Determine pipeline: upload (images) or URL-based (video/text)
+    const isUpload = Array.isArray(images) && images.length > 0;
+
+    if (!isUpload && (!url || typeof url !== "string")) {
       return NextResponse.json(
-        { error: "נא להזין כתובת URL" },
+        { error: "נא להזין כתובת URL או להעלות תמונות" },
         { status: 400 }
       );
     }
 
-    // 1. Validate URL
-    const validation = validateRecipeUrl(url);
-    if (!validation.valid) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      );
+    let extracted: ExtractedRecipe | null = null;
+    let platform: Platform;
+    let sourceUrl: string | null = null;
+    let imageUrl: string | null = null;
+    let videoUrl: string | null = null;
+    let thumbnailBase64: string | null = null;
+
+    if (isUpload) {
+      // === UPLOAD PIPELINE ===
+      platform = "upload";
+
+      if (images!.length > MAX_UPLOAD_IMAGES) {
+        return NextResponse.json(
+          { error: `ניתן להעלות עד ${MAX_UPLOAD_IMAGES} תמונות` },
+          { status: 400 }
+        );
+      }
+
+      for (const img of images!) {
+        if (img.length > MAX_IMAGE_SIZE) {
+          return NextResponse.json(
+            { error: "אחת התמונות גדולה מדי (מקסימום 4MB)" },
+            { status: 400 }
+          );
+        }
+      }
+
+      // Extract recipe from images directly
+      extracted = await withRetry(() => extractRecipeFromMedia(images!), 2);
+
+      // Store first image as thumbnail (will be uploaded to Supabase Storage later)
+      thumbnailBase64 = images![0];
+
+    } else {
+      // === URL-BASED PIPELINES ===
+      const classification = classifyRecipeUrl(url!);
+      if (!classification.valid) {
+        return NextResponse.json(
+          { error: classification.error },
+          { status: 400 }
+        );
+      }
+
+      platform = classification.platform;
+      sourceUrl = classification.url;
+
+      // Check for duplicate (only for URL-based recipes)
+      const { data: existing } = await supabase
+        .from("recipes")
+        .select("id, title")
+        .eq("source_url", sourceUrl)
+        .single();
+
+      if (existing) {
+        return NextResponse.json(
+          {
+            error: "המתכון הזה כבר נשמר",
+            existingId: existing.id,
+            existingTitle: existing.title,
+          },
+          { status: 409 }
+        );
+      }
+
+      if (classification.extractionMethod === "video") {
+        // === VIDEO PIPELINE (social media) ===
+        // Fetch oEmbed metadata for title hint and thumbnail fallback
+        const content = await withRetry(
+          () => fetchContent(classification.url, classification.platform),
+          3
+        );
+        videoUrl = content.videoUrl;
+        imageUrl = content.imageUrl;
+        const textHint = [content.title, content.description].filter(Boolean).join("\n");
+
+        // Extract frames from video via VPS
+        const frameResult = await extractVideoFrames(classification.url);
+
+        // Use VPS thumbnail if available
+        if (frameResult.thumbnail) {
+          thumbnailBase64 = frameResult.thumbnail;
+        }
+
+        // Extract recipe from video frames
+        extracted = await withRetry(
+          () => extractRecipeFromMedia(frameResult.frames, textHint || undefined),
+          2
+        );
+      } else {
+        // === TEXT PIPELINE (website) ===
+        const content = await withRetry(
+          () => fetchContent(classification.url, classification.platform),
+          3
+        );
+        imageUrl = content.imageUrl;
+
+        // Use fullText (JSON-LD) if available, fall back to description
+        const textContent = content.fullText || content.description;
+        extracted = await withRetry(() => extractRecipe(textContent), 3);
+      }
     }
-
-    // 2. Check for duplicate (scoped to current user via RLS)
-    const { data: existing } = await supabase
-      .from("recipes")
-      .select("id, title")
-      .eq("source_url", validation.url)
-      .single();
-
-    if (existing) {
-      return NextResponse.json(
-        {
-          error: "המתכון הזה כבר נשמר",
-          existingId: existing.id,
-          existingTitle: existing.title,
-        },
-        { status: 409 }
-      );
-    }
-
-    // 3. Fetch content with retry
-    const content = await withRetry(
-      () => fetchContent(validation.url, validation.platform),
-      3
-    );
-
-    // 4. Extract recipe via AI
-    const extracted = await withRetry(() => extractRecipe(content.description), 3);
 
     if (!extracted) {
       return NextResponse.json(
@@ -69,21 +144,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Store recipe (with user_id)
+    // Store recipe
     const { data: recipe, error: recipeError } = await supabase
       .from("recipes")
       .insert({
         title: extracted.title,
-        source_url: validation.url,
-        source_platform: validation.platform,
-        video_embed_url: content.videoUrl,
+        source_url: sourceUrl,
+        source_platform: platform,
+        video_embed_url: videoUrl,
         categories: extracted.categories,
         extraction_status:
           extracted.ingredients.length > 0 && extracted.steps.length > 0
             ? "complete"
             : "partial",
         steps: extracted.steps,
-        image_url: content.imageUrl,
+        image_url: imageUrl,
         user_id: user.id,
       })
       .select()
@@ -93,13 +168,28 @@ export async function POST(request: NextRequest) {
       throw new Error(`שגיאה בשמירת המתכון: ${recipeError.message}`);
     }
 
-    // 6. Upload image to permanent storage
-    if (content.imageUrl) {
-      const permanentUrl = await uploadRecipeImage(
-        content.imageUrl,
-        recipe.id,
-        supabase
-      );
+    // Upload thumbnail to permanent storage
+    if (thumbnailBase64) {
+      // Upload base64 image directly to Supabase Storage
+      const buffer = Uint8Array.from(atob(thumbnailBase64), (c) => c.charCodeAt(0));
+      const filePath = `${recipe.id}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from("recipe-thumbnails")
+        .upload(filePath, buffer, { contentType: "image/jpeg", upsert: true });
+
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage
+          .from("recipe-thumbnails")
+          .getPublicUrl(filePath);
+        await supabase
+          .from("recipes")
+          .update({ image_url: publicUrlData.publicUrl })
+          .eq("id", recipe.id);
+        recipe.image_url = publicUrlData.publicUrl;
+      }
+    } else if (imageUrl) {
+      // Download remote image URL and re-upload to permanent storage
+      const permanentUrl = await uploadRecipeImage(imageUrl, recipe.id, supabase);
       if (permanentUrl) {
         await supabase
           .from("recipes")
@@ -109,7 +199,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 7. Store ingredients
+    // Store ingredients
     if (extracted.ingredients.length > 0) {
       const ingredients = extracted.ingredients.map((ing) => ({
         recipe_id: recipe.id,
