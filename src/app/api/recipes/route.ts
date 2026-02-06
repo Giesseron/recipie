@@ -3,6 +3,7 @@ import { validateRecipeUrl } from "@/lib/url-validator";
 import { fetchContent } from "@/lib/content-fetcher";
 import { extractRecipe, normalizeIngredient } from "@/lib/ai-extractor";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { uploadRecipeImage } from "@/lib/image-storage";
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,7 +93,23 @@ export async function POST(request: NextRequest) {
       throw new Error(`שגיאה בשמירת המתכון: ${recipeError.message}`);
     }
 
-    // 6. Store ingredients
+    // 6. Upload image to permanent storage
+    if (content.imageUrl) {
+      const permanentUrl = await uploadRecipeImage(
+        content.imageUrl,
+        recipe.id,
+        supabase
+      );
+      if (permanentUrl) {
+        await supabase
+          .from("recipes")
+          .update({ image_url: permanentUrl })
+          .eq("id", recipe.id);
+        recipe.image_url = permanentUrl;
+      }
+    }
+
+    // 7. Store ingredients
     if (extracted.ingredients.length > 0) {
       const ingredients = extracted.ingredients.map((ing) => ({
         recipe_id: recipe.id,

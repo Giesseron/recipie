@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { fetchContent } from "@/lib/content-fetcher";
+import { uploadRecipeImage, isStorageUrl } from "@/lib/image-storage";
 import { Platform } from "@/types/recipe";
 
 /**
@@ -50,36 +51,69 @@ export async function GET(request: NextRequest) {
     // Process each recipe
     for (const recipe of recipes) {
       try {
-        // Skip if no source URL
-        if (!recipe.source_url) {
+        // Skip if already stored in Supabase Storage
+        if (isStorageUrl(recipe.image_url)) {
           results.skipped++;
           results.details.push({
             id: recipe.id,
             title: recipe.title,
-            status: "skipped - no source URL",
+            status: "skipped - already in Storage",
+            currentImage: recipe.image_url,
           });
           continue;
         }
 
-        // Fetch new thumbnail using improved extraction
-        const content = await fetchContent(
-          recipe.source_url,
-          recipe.source_platform as Platform
-        );
+        // Skip if no source URL and no existing image
+        if (!recipe.source_url && !recipe.image_url) {
+          results.skipped++;
+          results.details.push({
+            id: recipe.id,
+            title: recipe.title,
+            status: "skipped - no source URL or image",
+          });
+          continue;
+        }
+
+        let permanentUrl: string | null = null;
+
+        // Strategy 1: Try uploading the existing image_url (may still be valid)
+        if (recipe.image_url) {
+          permanentUrl = await uploadRecipeImage(
+            recipe.image_url,
+            recipe.id,
+            supabase
+          );
+        }
+
+        // Strategy 2: If that failed, re-fetch from the source platform
+        if (!permanentUrl && recipe.source_url) {
+          try {
+            const content = await fetchContent(
+              recipe.source_url,
+              recipe.source_platform as Platform
+            );
+            if (content.imageUrl) {
+              permanentUrl = await uploadRecipeImage(
+                content.imageUrl,
+                recipe.id,
+                supabase
+              );
+            }
+          } catch (error) {
+            console.log(`Re-fetch failed for ${recipe.id}:`, error);
+          }
+        }
 
         const debugInfo = {
           platform: recipe.source_platform,
           sourceUrl: recipe.source_url,
           currentImage: recipe.image_url,
-          fetchedImage: content.imageUrl,
         };
 
-        // If we got a new image URL and it's different from the old one
-        if (content.imageUrl && content.imageUrl !== recipe.image_url) {
-          // Update the recipe with new thumbnail
+        if (permanentUrl) {
           const { error: updateError } = await supabase
             .from("recipes")
-            .update({ image_url: content.imageUrl })
+            .update({ image_url: permanentUrl })
             .eq("id", recipe.id);
 
           if (updateError) {
@@ -90,15 +124,16 @@ export async function GET(request: NextRequest) {
           results.details.push({
             id: recipe.id,
             title: recipe.title,
-            status: "updated",
+            status: "updated - stored in Storage",
             ...debugInfo,
+            fetchedImage: permanentUrl,
           });
         } else {
           results.skipped++;
           results.details.push({
             id: recipe.id,
             title: recipe.title,
-            status: content.imageUrl ? "skipped - same image" : "skipped - no image fetched",
+            status: "skipped - could not download image",
             ...debugInfo,
           });
         }
